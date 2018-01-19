@@ -55,11 +55,11 @@ module Fog
       model      :organization
       collection :organizations
       model      :catalog_item
-      collection :vapp_templates
-      model      :vapp_template
-      collection :template_vms
-      model      :template_vm
       collection :catalog_items
+      model      :vapp_template
+      collection :vapp_templates
+      model      :template_vm
+      collection :template_vms      
       model      :custom_field
       collection :custom_fields
       model      :vdc
@@ -82,6 +82,10 @@ module Fog
       collection :tags
       model      :media
       collection :medias # sic
+      model      :vdc_edge_gateway
+      collection :vdc_edge_gateways
+      model      :vdc_edge_gateway_config
+      model      :vdc_edge_gateway_interface
 
       request_path 'fog/vcloud_director/requests/compute'
       request :delete_catalog_item
@@ -116,6 +120,7 @@ module Fog
       request :get_disks_from_query
       request :get_disks_rasd_items_list
       request :get_edge_gateway
+      request :get_edge_gateway_external_ip_usage
       request :get_entity
       request :get_execute_query
       request :get_groups_from_query

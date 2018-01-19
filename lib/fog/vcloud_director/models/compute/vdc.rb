@@ -39,6 +39,11 @@ module Fog
           requires :available_networks
           service.networks(:vdc => self)
         end
+
+        def edge_gateways
+          requires :id
+          service.vdc_edge_gateways(:vdc => self)
+        end
       end
     end
   end

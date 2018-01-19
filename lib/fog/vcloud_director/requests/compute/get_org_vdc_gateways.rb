@@ -2,8 +2,7 @@ module Fog
   module Compute
     class VcloudDirector
       class Real
-        extend Fog::Deprecation
-        deprecate :get_edge_gateways, :get_org_vdc_gateways
+        require 'fog/vcloud_director/parsers/compute/vdc_edge_gateways'
 
         # List all gateways for this Org vDC.
         #
@@ -20,10 +19,9 @@ module Fog
             :expects    => 200,
             :idempotent => true,
             :method     => 'GET',
-            :parser     => Fog::ToHashDocument.new,
+            :parser     => Fog::Parsers::Compute::VcloudDirector::VdcEdgeGateways.new,
             :path       => "admin/vdc/#{id}/edgeGateways"
           )
-          ensure_list! response.body, :EdgeGatewayRecord
           response
         end
       end

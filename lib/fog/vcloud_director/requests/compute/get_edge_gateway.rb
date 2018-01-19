@@ -2,6 +2,7 @@ module Fog
   module Compute
     class VcloudDirector
       class Real
+        require 'fog/vcloud_director/parsers/compute/edge_gateway_configuration'
         # Retrieve an edge gateway.
         #
         # @param [String] id Object identifier of the edge gateway.
@@ -17,34 +18,34 @@ module Fog
               :expects => 200,
               :idempotent => true,
               :method => 'GET',
-              :parser => Fog::ToHashDocument.new,
+              :parser => Fog::Parsers::Compute::VcloudDirector::EdgeGatewayConfiguration.new,
               :path => "admin/edgeGateway/#{id}"
           )
 
-          ensure_list! response.body[:Configuration], :GatewayInterfaces, :GatewayInterface
+          # ensure_list! response.body[:Configuration], :GatewayInterfaces, :GatewayInterface
 
-          edge_gateway_service_configuration = response.body[:Configuration][:EdgeGatewayServiceConfiguration]
+          # edge_gateway_service_configuration = response.body[:Configuration][:EdgeGatewayServiceConfiguration]
 
-          ensure_list! edge_gateway_service_configuration[:FirewallService], :FirewallRule if edge_gateway_service_configuration[:FirewallService]
-          ensure_list! edge_gateway_service_configuration[:NatService], :NatRule if edge_gateway_service_configuration[:NatService]
+          # ensure_list! edge_gateway_service_configuration[:FirewallService], :FirewallRule if edge_gateway_service_configuration[:FirewallService]
+          # ensure_list! edge_gateway_service_configuration[:NatService], :NatRule if edge_gateway_service_configuration[:NatService]
 
-          if edge_gateway_service_configuration[:LoadBalancerService]
+          # if edge_gateway_service_configuration[:LoadBalancerService]
 
-            ensure_list! edge_gateway_service_configuration[:LoadBalancerService], :Pool
-            edge_gateway_service_configuration[:LoadBalancerService][:Pool].each do |pool|
-              ensure_list! pool, :ServicePort
-              ensure_list! pool, :Member
-              pool[:Member].each do |member|
-                ensure_list! member, :ServicePort
-              end
-            end
+          #   ensure_list! edge_gateway_service_configuration[:LoadBalancerService], :Pool
+          #   edge_gateway_service_configuration[:LoadBalancerService][:Pool].each do |pool|
+          #     ensure_list! pool, :ServicePort
+          #     ensure_list! pool, :Member
+          #     pool[:Member].each do |member|
+          #       ensure_list! member, :ServicePort
+          #     end
+          #   end
 
-            ensure_list! edge_gateway_service_configuration[:LoadBalancerService], :VirtualServer
-            edge_gateway_service_configuration[:LoadBalancerService][:VirtualServer].each do |virtual_server|
-              ensure_list! virtual_server, :ServiceProfile
-            end
+          #   ensure_list! edge_gateway_service_configuration[:LoadBalancerService], :VirtualServer
+          #   edge_gateway_service_configuration[:LoadBalancerService][:VirtualServer].each do |virtual_server|
+          #     ensure_list! virtual_server, :ServiceProfile
+          #   end
 
-          end
+          # end
 
           response
         end
