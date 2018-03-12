@@ -42,7 +42,7 @@ module Fog
 
         def edge_gateways
           requires :id
-          service.vdc_edge_gateways(:vdc => self)
+          service.edge_gateways(:vdc => self)
         end
       end
     end

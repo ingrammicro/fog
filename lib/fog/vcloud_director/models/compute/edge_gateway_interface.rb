@@ -3,7 +3,7 @@ require 'fog/core/model'
 module Fog
   module Compute
     class VcloudDirector
-      class VdcEdgeGatewayInterface < Model
+      class EdgeGatewayInterface < Model
         attribute :name
         attribute :display_name
         attribute :network

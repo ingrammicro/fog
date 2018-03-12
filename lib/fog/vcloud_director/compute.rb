@@ -82,10 +82,11 @@ module Fog
       collection :tags
       model      :media
       collection :medias # sic
-      model      :vdc_edge_gateway
-      collection :vdc_edge_gateways
-      model      :vdc_edge_gateway_config
-      model      :vdc_edge_gateway_interface
+      model      :edge_gateway
+      collection :edge_gateways
+      model      :edge_gateway_config
+      model      :edge_gateway_interface
+      model      :edge_gateway_external_connection
 
       request_path 'fog/vcloud_director/requests/compute'
       request :delete_catalog_item
@@ -257,6 +258,7 @@ module Fog
       request :post_upload_vapp_template
       request :post_create_snapshot
       request :put_catalog_item_metadata_item_metadata
+      request :put_config_network_section_vapp
       request :put_cpu
       request :put_disk_metadata_item_metadata
       request :put_disks

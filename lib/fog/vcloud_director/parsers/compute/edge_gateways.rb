@@ -2,7 +2,7 @@ module Fog
     module Parsers
         module Compute
             module VcloudDirector
-                class VdcEdgeGateways < VcloudDirectorParser
+                class EdgeGateways < VcloudDirectorParser
                     def reset
                     @edge_gateway = {}
                     @response = { :edge_gateways => [] }

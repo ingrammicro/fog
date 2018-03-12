@@ -39,23 +39,13 @@ module Fog
         def populate_uris(options = {})
           options[:vdc_id] || raise("vdc_id option is required")
           options[:vdc_uri] =  vdc_end_point(options[:vdc_id])
-          options[:network_uri] = network_end_point(options[:network_id]) if options[:network_id]
+          options[:network_uri] = network_end_point(options[:InstantiationParams][:network_config][:network_id]) if (options[:InstantiationParams] && options[:InstantiationParams][:network_config] && options[:InstantiationParams][:network_config][:network_id])
           options[:template_uri] = vapp_template_end_point(options[:template_id]) || raise("template_id option is required")
           options
         end
 
         def generate_instantiate_vapp_template_request(options ={})        
-          
           #overriding some params so they work with new standardised generator
-          options[:InstantiationParams] = 
-          {
-            :NetworkConfig => 
-              [{
-              :networkName => options[:network_name],
-              :networkHref => options[:network_uri],
-              :fenceMode => 'bridged'
-              }]
-          } unless options[:InstantiationParams]
           options[:name] = options.delete(:vapp_name) if options[:vapp_name]
           options[:Description] = options.delete(:description) unless options[:Description]
           if options[:vms_config] then
@@ -63,14 +53,8 @@ module Fog
             options[:source_vms].each_with_index {|vm, i|options[:source_vms][i][:StorageProfileHref] = options[:source_vms][i].delete(:storage_profile_href) }
           end
           options[:Source] = options.delete(:template_uri) if options[:template_uri]
-            
-              
-
           
           Fog::Generators::Compute::VcloudDirector::InstantiateVappTemplateParams.new(options).generate_xml
-
-
-
         end
 
         def xmlns

@@ -2,7 +2,7 @@ module Fog
   module Compute
     class VcloudDirector
       class Real
-        require 'fog/vcloud_director/parsers/compute/vdc_edge_gateways'
+        require 'fog/vcloud_director/parsers/compute/edge_gateways'
 
         # List all gateways for this Org vDC.
         #
@@ -19,7 +19,7 @@ module Fog
             :expects    => 200,
             :idempotent => true,
             :method     => 'GET',
-            :parser     => Fog::Parsers::Compute::VcloudDirector::VdcEdgeGateways.new,
+            :parser     => Fog::Parsers::Compute::VcloudDirector::EdgeGateways.new,
             :path       => "admin/vdc/#{id}/edgeGateways"
           )
           response
@@ -53,11 +53,11 @@ module Fog
                 :href => make_href("admin/vdc/#{vdc_id}edgeGateways?page=1&pageSize=25&format=records")}],
              :EdgeGatewayRecord => []}
 
-          vdc_edge_gateways = data[:edge_gateways].select do |id, edge_gateway|
+          edge_gateways = data[:edge_gateways].select do |id, edge_gateway|
             edge_gateway[:vdc] == vdc_id
           end
 
-          body[:EdgeGatewayRecord] += vdc_edge_gateways.map do |id, edge_gateway|
+          body[:EdgeGatewayRecord] += edge_gateways.map do |id, edge_gateway|
             {:vdc => make_href("vdc/#{vdc_id}"),
              :numberOfOrgNetworks => "1",
              :numberOfExtNetworks => "1",

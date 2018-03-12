@@ -12,8 +12,10 @@ module Fog
 
           def vapp_attrs
             attrs = {
-              :xmlns => 'http://www.vmware.com/vcloud/v1.5',
-              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1'
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+              'xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData',
+              'xmlns:vcloud' => 'http://www.vmware.com/vcloud/v1.5'
             }
 
             [:deploy, :powerOn, :name].each do |a|
@@ -38,16 +40,15 @@ module Fog
                     xml.StorageProfile vapp[:DefaultStorageProfile]
                 } if (vapp.key? :DefaultStorageProfile)
                 xml.NetworkConfigSection {
+                  network = vapp[:network_config]
                   xml['ovf'].Info
-                  vapp[:NetworkConfig].each do |network|
-                    xml.NetworkConfig(:networkName => network[:networkName]) {
-                      xml.Configuration {
-                        xml.ParentNetwork(:href => network[:networkHref])
-                        xml.FenceMode network[:fenceMode]
-                      }
+                  xml.NetworkConfig(:networkName => network[:network_name]) {
+                    xml.Configuration {
+                      xml.ParentNetwork(:href => @configuration[:network_uri])
+                      xml.FenceMode network[:fence_mode]
                     }
-                  end if vapp[:NetworkConfig]
-                }
+                  }
+                } if (vapp.key? :network_config)
               }
             end
           end
@@ -63,47 +64,84 @@ module Fog
                 xml.Source(:name =>vm[:name], :href => vm[:href])
                 xml.VmGeneralParams {
                   xml.Name vm[:name]
-                  xml.Description vm[:Description] if vm[:Description]
-                  xml.NeedsCustomization if vm[:NeedsCustomization]
+                  xml.Description vm[:description] if vm[:description]
+                  xml.NeedsCustomization vm[:needs_customization] if vm[:needs_customization]
                 } if vm[:name]
                 xml.InstantiationParams {
-                  if vm[:networks]
-                    xml.NetworkConnectionSection(:href => "#{vm[:href]}/networkConnectionSection/", :type => "application/vnd.vmware.vcloud.networkConnectionSection+xml", 'xmlns:ovf' => "http://schemas.dmtf.org/ovf/envelope/1", "ovf:required" => "false") {
+                  if vm[:network]
+                    xml.NetworkConnectionSection(:href => "#{vm[:href]}/networkConnectionSection/", 
+                      :type => "application/vnd.vmware.vcloud.networkConnectionSection+xml", 
+                      'xmlns:ovf' => "http://schemas.dmtf.org/ovf/envelope/1", 
+                      'ovf:required' => "false") {
+                      network = vm[:network]
                       xml['ovf'].Info
-                      xml.PrimaryNetworkConnectionIndex 0
-                      vm[:networks].each_with_index do |network, i|
-                        xml.NetworkConnection(:network => network[:networkName]) {
-                          xml.NetworkConnectionIndex i
-                          xml.IpAddress network[:IpAddress] if (network.key? :IpAddress)
-                          xml.ExternalIpAddress network[:ExternalIpAddress] if (network.key? :ExternalIpAddress)
-                          xml.IsConnected network[:IsConnected]
-                          xml.MACAddress network[:MACAddress] if (network.key? :MACAddress)
-                          xml.IpAddressAllocationMode network[:IpAddressAllocationMode]
-                        }
-                      end
+                      xml.PrimaryNetworkConnectionIndex 0                      
+                      xml.NetworkConnection(:network => network[:network_name]) {
+                        xml.NetworkConnectionIndex 0
+                        xml.IpAddress network[:ip_address] if network[:ip_address]
+                        xml.ExternalIpAddress network[:external_ip_address] if network[:external_ip_address]
+                        xml.IsConnected (network[:is_connected] || false)
+                        xml.MACAddress network[:mac_address] if network[:mac_address]
+                        xml.IpAddressAllocationMode (network[:ip_address_allocation_mode] || "NONE")
+                      }
                     }
                   end
                   if customization = vm[:guest_customization]
                     xml.GuestCustomizationSection(:xmlns => "http://www.vmware.com/vcloud/v1.5", 'xmlns:ovf' => "http://schemas.dmtf.org/ovf/envelope/1") {
                       xml['ovf'].Info
-                      xml.Enabled (customization[:Enabled] || false)
-                      xml.ChangeSid customization[:ChangeSid] if (customization.key? :ChangeSid)
-                      xml.JoinDomainEnabled customization[:JoinDomainEnabled] if (customization.key? :JoinDomainEnabled)
-                      xml.UseOrgSettings customization[:UseOrgSettings] if (customization.key? :UseOrgSettings)
-                      xml.DomainName customization[:DomainName] if (customization.key? :DomainName)
-                      xml.DomainUserName customization[:DomainUserName] if (customization.key? :DomainUserName)
-                      xml.DomainUserPassword customization[:DomainUserPassword] if (customization.key? :DomainUserPassword)
-                      xml.MachineObjectOU customization[:MachineObjectOU] if (customization.key? :MachineObjectOU)
-                      xml.AdminPasswordEnabled customization[:AdminPasswordEnabled] if (customization.key? :AdminPasswordEnabled)
-                      xml.AdminPasswordAuto customization[:AdminPasswordAuto] if (customization.key? :AdminPasswordAuto)
-                      xml.AdminPassword customization[:AdminPassword] if (customization.key? :AdminPassword)
-                      xml.ResetPasswordRequired customization[:ResetPasswordRequired] if (customization.key? :ResetPasswordRequired)
-                      xml.CustomizationScript CGI::escapeHTML(customization[:CustomizationScript]).gsub(/\r/, "&#13;") if (customization.key? :CustomizationScript)
-                      xml.ComputerName customization[:ComputerName]
+                      xml.Enabled (customization[:enabled] || false)
+                      xml.ChangeSid customization[:change_sid] if (customization.key? :change_sid)
+                      xml.JoinDomainEnabled customization[:join_domain_enabled] if (customization.key? :join_domain_enabled)
+                      xml.UseOrgSettings customization[:use_org_settings] if (customization.key? :use_org_settings)
+                      xml.DomainName customization[:domain_name] if (customization.key? :domain_name)
+                      xml.DomainUserName customization[:domain_user_name] if (customization.key? :domain_user_name)
+                      xml.DomainUserPassword customization[:domain_user_password] if (customization.key? :domain_user_password)
+                      xml.MachineObjectOU customization[:machine_object_ou] if (customization.key? :machine_object_ou)
+                      xml.AdminPasswordEnabled customization[:admin_password_enabled] if (customization.key? :admin_password_enabled)
+                      xml.AdminPasswordAuto customization[:admin_password_auto] if (customization.key? :admin_password_auto)
+                      xml.AdminPassword customization[:admin_password] if (customization.key? :admin_password)
+                      xml.ResetPasswordRequired customization[:reset_password_required] if (customization.key? :reset_password_required)
+                      xml.CustomizationScript customization[:customization_script] if (customization.key? :customization_script)
+                      xml.ComputerName customization[:computer_name] if (customization.key? :computer_name)
                     }
                   end
+                  if virtual_hardware = vm[:virtual_hardware]
+                    xml['ovf'].VirtualHardwareSection('xmlns:ovf' => "http://schemas.dmtf.org/ovf/envelope/1", 
+                      'xmlns:rasd'=>"http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData", 
+                      'xmlns:vmw'=>"http://www.vmware.com/schema/ovf", 
+                      'xmlns:vcloud'=>"http://www.vmware.com/vcloud/v1.5", 
+                      'xmlns:vssd'=>"http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData", 
+                      'ovf:transport'=>"", 
+                      'vcloud:href'=>"#{vm[:href]}/virtualHardwareSection/", 
+                      'vcloud:type'=>"application/vnd.vmware.vcloud.virtualHardwareSection+xml") do
+                      xml['ovf'].Info
+                      xml['ovf'].Item do
+                        xml['rasd'].AddressOnParent 0
+                        xml['rasd'].Description 'Hard disk'
+                        xml['rasd'].ElementName 'Hard disk 1'
+                        xml['rasd'].HostResource(
+                          'vcloud:busSubType' => virtual_hardware[:is_windows] ? 'lsilogicsas' : 'lsilogic',
+                          'vcloud:busType' => '6',
+                          'vcloud:capacity' => virtual_hardware[:capacity].to_s
+                        )
+                        xml['rasd'].InstanceID 2000
+                        xml['rasd'].ResourceType 17
+                      end
+                      xml['ovf'].Item do
+                        xml['rasd'].AllocationUnits 'hertz * 10 ^ 6'
+                        xml['rasd'].InstanceID 5
+                        xml['rasd'].ResourceType 3
+                        xml['rasd'].VirtualQuantity virtual_hardware[:cpu].to_i
+                      end   
+                      xml['ovf'].Item do
+                        xml['rasd'].AllocationUnits 'byte * 2^20'
+                        xml['rasd'].InstanceID 6
+                        xml['rasd'].ResourceType 4
+                        xml['rasd'].VirtualQuantity virtual_hardware[:memory].to_i
+                      end
+                    end                               
+                  end
                 }
-                xml.StorageProfile(:href => vm[:StorageProfileHref]) if (vm.key? :StorageProfileHref)
               }
             end if vms
 

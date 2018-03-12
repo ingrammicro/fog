@@ -1,11 +1,11 @@
 require 'fog/core/collection'
-require 'fog/vcloud_director/models/compute/vdc_edge_gateway'
+require 'fog/vcloud_director/models/compute/edge_gateway'
 
 module Fog
   module Compute
     class VcloudDirector
-      class VdcEdgeGateways < Collection
-        model Fog::Compute::VcloudDirector::VdcEdgeGateway
+      class EdgeGateways < Collection
+        model Fog::Compute::VcloudDirector::EdgeGateway
 
         attribute :vdc
 

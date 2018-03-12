@@ -41,6 +41,7 @@ module Fog
               :xmlns => 'http://www.vmware.com/vcloud/v1.5',
               'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
               'xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData',
+              'xmlns:vcloud' => 'http://www.vmware.com/vcloud/v1.5',
               :name => options[:name]
             }
             xml.Vm(attrs) do
@@ -70,6 +71,7 @@ module Fog
             xml['ovf'].Info 'Virtual Hardware Requirements'
             cpu_section(xml, options[:cpu]) if options[:cpu]
             memory_section(xml, options[:memory]) if options[:memory]
+            disk_section(xml, options[:capacity]) if options[:capacity]
           end
         end
 
@@ -88,6 +90,37 @@ module Fog
             xml['rasd'].InstanceID 6
             xml['rasd'].ResourceType 4
             xml['rasd'].VirtualQuantity memory.to_i
+          end
+        end
+
+        def disk_section(xml, capacity)
+          xml['ovf'].Item do
+            xml['rasd'].Address 0
+            xml['rasd'].Description 'SCSI Controller'
+            xml['rasd'].ElementName 'SCSI Controller'
+            xml['rasd'].InstanceID 2
+            xml['rasd'].ResourceSubType 'lsilogicsas'
+            xml['rasd'].ResourceType 6
+          end
+          xml['ovf'].Item do
+            xml['rasd'].AddressOnParent 0
+            xml['rasd'].Description 'Hard disk'
+            xml['rasd'].ElementName 'Hard disk 1'
+            xml['rasd'].HostResource(
+              'vcloud:busSubType' => 'lsilogicsas',
+              'vcloud:busType' => '6',
+              'vcloud:capacity' => capacity.to_s
+            )
+            xml['rasd'].InstanceID 2000
+            xml['rasd'].Parent 2
+            xml['rasd'].ResourceType 17
+          end
+          xml['ovf'].Item do
+            xml['rasd'].Address 0
+            xml['rasd'].Description 'IDE Controller'
+            xml['rasd'].ElementName 'IDE Controller'
+            xml['rasd'].InstanceID 3
+            xml['rasd'].ResourceType 5
           end
         end
 
@@ -136,8 +169,8 @@ module Fog
               xml.AdminAutoLogonEnabled customization[:admin_auto_logon_enabled] if (customization.key? :admin_auto_logon_enabled)
               xml.AdminAutoLogonCount customization[:admin_auto_logon_count] if (customization.key? :admin_auto_logon_count)
               xml.ResetPasswordRequired customization[:reset_password_required] if (customization.key? :reset_password_required)
-              xml.CustomizationScript CGI::escapeHTML(customization[:customization_script]).gsub(/\r/, "&#13;") if (customization.key? :customization_script)
-              xml.ComputerName customization[:compute_name]
+              xml.CustomizationScript customization[:customization_script] if (customization.key? :customization_script)
+              xml.ComputerName customization[:computer_name]
             }
           end
         end
